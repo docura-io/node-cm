@@ -3,11 +3,32 @@ var mocha = require("mocha"),
     cm = require("../index.js");
 
 describe("compiler", function () {
-    it("should start CM", function (done) {
+    //     it("should start CM", function (done) {
+    //         this.timeout(40 * 1000);
+    //         var onStart = cm.start();
+    // 
+    //         onStart.then(function (success) { if (success) done(); }, done).catch(done);
+    //     });
+
+    it("should write \"Hello World\"", function (done) {
         this.timeout(40 * 1000);
+        var response = "";
+        cm.setup(function (data) {
+            console.log(data);
+            response = data;
+        });
         var onStart = cm.start();
-        
-        onStart.then(function(success) { if(success) done(); }, done).catch(done);
+
+        onStart.then(function (success) {
+            console.log("started", success);
+            if (success) {
+                cm.write("pln(\"Hello World\");").then(function () {
+                    console.log("got response");
+                    response.should.be.equal("Hello World");
+                    done();
+                }, done).catch(done);
+            }
+        }, done).catch(done);
     });
     
     // it("should set environment variables", function () {
@@ -24,9 +45,9 @@ describe("compiler", function () {
     //     process.env["CM_VCVERSION"].should.be.equal("10");
     //     process.env["CM_WRITE"].should.be.equal("C:\\CetDev\\version6.5\\write");
     // });
-// 
-//     it("should kill CM", function () {
-//         var code = cm.kill();
-//         code.indexOf("terminated").should.be.above(-1);
-//     });
+    // 
+    //     it("should kill CM", function () {
+    //         var code = cm.kill();
+    //         code.indexOf("terminated").should.be.above(-1);
+    //     });
 });

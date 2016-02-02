@@ -3,13 +3,11 @@ module.exports = new (function (proc, psFind) {
         _cm = null,
         _cmExecutable = "_cm.exe",
         env_vars_set = false,
-        _onReady = null,
         _onRead = null,
         _onError = null,
         _onExit = null;
 
-    this.setup = function (onReady, onRead, onError, onExit) {
-        _onReady = onReady;
+    this.setup = function (onRead, onError, onExit) {
         _onRead = onRead;
         _onError = onError;
         _onExit = onExit;
@@ -46,6 +44,13 @@ module.exports = new (function (proc, psFind) {
                 if (_onExit)
                     _onExit(code);
             });
+        });
+    };
+    
+    this.write = function(data) {
+        return new Promise(function(resolve, reject) {
+            _cm.stdin.write(data + "\x01");
+            resolve();
         });
     };
 
