@@ -5,6 +5,7 @@ var mocha = require("mocha"),
 describe("compiler", function () {
     //     it("should start CM", function (done) {
     //         this.timeout(40 * 1000);
+    //         cm.setup(null, null, null, true);
     //         var onStart = cm.start();
     // 
     //         onStart.then(function (success) { if (success) done(); }, done).catch(done);
@@ -36,26 +37,26 @@ describe("compiler", function () {
 //         }, done).catch(done);
 //     });
 
-    it("should write \"Hello World\"", function (done) {
-        this.timeout(40 * 1000);
-        var response = "";
-        cm.setup(function (data) {
-            console.log(data);
-            response = data;
-        });
-        var onStart = cm.start();
-
-        onStart.then(function (success) {
-            console.log("CM has started", success);
-            if (success) {
-                cm.runFile("./test.cm");
-                
-                setTimeout(function () {
-                    done();
-                }, 5000);
-            }
-        }, done).catch(done);
-    });
+//     it("should write \"Hello World\"", function (done) {
+//         this.timeout(40 * 1000);
+//         var response = "";
+//         cm.setup(function (data) {
+//             console.log(data);
+//             response = data;
+//         });
+//         var onStart = cm.start();
+// 
+//         onStart.then(function (success) {
+//             console.log("CM has started", success);
+//             if (success) {
+//                 cm.runFile("./test.cm");
+//                 
+//                 setTimeout(function () {
+//                     done();
+//                 }, 5000);
+//             }
+//         }, done).catch(done);
+//     });
     
     // it("should set environment variables", function () {
     //     cm.setEnvironmentVariables();
@@ -71,6 +72,15 @@ describe("compiler", function () {
     //     process.env["CM_VCVERSION"].should.be.equal("10");
     //     process.env["CM_WRITE"].should.be.equal("C:\\CetDev\\version6.5\\write");
     // });
+    
+    it("should set environment variables overriding CM_ROOT", function () {
+        
+        cm.setup(null, null, null, { cmRoot: "C:\\temp" });
+        cm.setEnvironmentVariables();
+        
+        process.env["CM_ROOT"].should.be.equal("C:\\temp");
+    });
+    
     // 
     //     it("should kill CM", function () {
     //         var code = cm.kill();

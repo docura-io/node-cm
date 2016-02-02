@@ -5,20 +5,27 @@ module.exports = new (function (proc, psFind) {
         env_vars_set = false,
         _onRead = null,
         _onError = null,
-        _onExit = null;
+        _onExit = null,
+        _debug = false,
+        _options = null;
 
-    this.setup = function (onRead, onError, onExit) {
+    this.setup = function (onRead, onError, onExit, options, debug) {
         _onRead = onRead;
         _onError = onError;
         _onExit = onExit;
+        _options = options;
+        
+        if(debug != undefined && debug != null) {
+            _debug = debug;
+        }
     };
 
-    this.start = function (cm_path) {
+    this.start = function (options) {
         return new Promise(function (resolve, reject) {
-            if (cm_path) {
-                _cmExecutable = cm_path;
+            if (options && options.cmPath) {
+                _cmExecutable = options.cmPath;
             }
-
+            
             self.setEnvironmentVariables();
             self.kill();
 
@@ -57,7 +64,12 @@ module.exports = new (function (proc, psFind) {
     };
 
     this.runFile = function (file) {
-        var cmd = _makeCommand("runFile(\"" + file + "\")");
+        var cmd = _makeCommand("run(\"" + file + "\")");
+        self.write(cmd);
+    };
+    
+    this.compileFile = function (file) {
+        var cmd = _makeCommand("load(\"" + file + "\")");
         self.write(cmd);
     };
 
@@ -77,7 +89,7 @@ module.exports = new (function (proc, psFind) {
             env_vars_set = true;
         }
 
-        var CM_ROOT = "C:\\CetDev\\version6.5",
+        var CM_ROOT = _options && _options.cmRoot || "C:\\CetDev\\version6.5",
             CM_HOME = CM_ROOT + "\\home",
             CM_WRITE = CM_ROOT + "\\write";
 
