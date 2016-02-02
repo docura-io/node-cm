@@ -67,6 +67,10 @@ module.exports = new (function (proc, psFind) {
         
         _cm.stdin.write(cmd);
     };
+    
+    // this.clean = function() {
+    //   proc.execSync("make --jobs -C \"" + + "\" \"clean-cm\"")  
+    // };
 
     this.runFile = function (file) {
         file = file.replace(/\\/g, "");
