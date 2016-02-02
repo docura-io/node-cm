@@ -6,18 +6,13 @@ module.exports = new (function (proc, psFind) {
         _onRead = null,
         _onError = null,
         _onExit = null,
-        _debug = false,
         _options = null;
 
-    this.setup = function (onRead, onError, onExit, options, debug) {
+    this.setup = function (onRead, onError, onExit, options) {
         _onRead = onRead;
         _onError = onError;
         _onExit = onExit;
         _options = options;
-        
-        if(debug != undefined && debug != null) {
-            _debug = debug;
-        }
     };
 
     this.start = function (options) {
@@ -61,7 +56,7 @@ module.exports = new (function (proc, psFind) {
     this.write = function (data) {
         var cmd = _makeCommand(data);
         
-        if(_debug)
+        if(_options && _options.debug)
             console.log(data);
         
         _cm.stdin.write(cmd);
@@ -69,13 +64,13 @@ module.exports = new (function (proc, psFind) {
 
     this.runFile = function (file) {
         file = file.replace(/\\/g, "");
-        var cmd = "run(\"" + file + "\")";
+        var cmd = "run(\"" + file + "\");";
         self.write(cmd);
     };
     
     this.compileFile = function (file) {
         file = file.replace(/\\/g, "");
-        var cmd = "load(\"" + file + "\")";
+        var cmd = "load(\"" + file + "\");";
         self.write(cmd);
     };
 
