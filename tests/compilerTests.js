@@ -5,11 +5,18 @@ var mocha = require("mocha"),
 describe("compiler", function () {
     //     it("should start CM", function (done) {
     //         this.timeout(40 * 1000);
-    //         cm.setup(null, null, null, true);
-    //         var onStart = cm.start();
+    //         var compiler = new cm();
+    //         var onStart = compiler.start();
     // 
     //         onStart.then(function (success) { if (success) done(); }, done).catch(done);
     //     });
+    
+        it("should clean CM", function (done) {
+            this.timeout(40 * 1000);
+            var compiler = new cm();
+            var r = compiler.clean();
+            console.log(r);
+        });
 
 //     it("should write \"Hello World\"", function (done) {
 //         this.timeout(40 * 1000);
@@ -59,7 +66,8 @@ describe("compiler", function () {
 //     });
     
     // it("should set environment variables", function () {
-    //     cm.setEnvironmentVariables();
+    //     var compiler = new cm();
+    //     compiler.setEnvironmentVariables();
     //     
     //     process.env["CM_ARCH"].should.be.equal("win64");
     //     process.env["CM_ENVFILE_EMACS"].should.be.equal("C:\\CetDev\\version6.5\\write\\_emacs.cmenv");
@@ -72,14 +80,13 @@ describe("compiler", function () {
     //     process.env["CM_VCVERSION"].should.be.equal("10");
     //     process.env["CM_WRITE"].should.be.equal("C:\\CetDev\\version6.5\\write");
     // });
-    
-    it("should set environment variables overriding CM_ROOT", function () {
-        
-        cm.setup(null, null, null, { cmRoot: "C:\\temp" });
-        cm.setEnvironmentVariables();
-        
-        process.env["CM_ROOT"].should.be.equal("C:\\temp");
-    });
+    // 
+    // it("should set environment variables overriding CM_ROOT", function () {
+    //     var compiler = new cm(null, null, null, { cmRoot: "C:\\temp" });
+    //     compiler.setEnvironmentVariables();
+    //     
+    //     process.env["CM_ROOT"].should.be.equal("C:\\temp");
+    // });
     
     // 
     //     it("should kill CM", function () {

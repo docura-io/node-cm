@@ -1,40 +1,34 @@
-module.exports = new (function (proc, psFind) {
+var proc = require("child_process");
+
+module.exports = function (options) {
     var self = this,
         _cm = null,
-        _cmExecutable = "_cm.exe",
         env_vars_set = false,
-        _onRead = null,
-        _onError = null,
-        _onExit = null,
-        _options = null;
-
-    this.setup = function (onRead, onError, onExit, options) {
-        _onRead = onRead;
-        _onError = onError;
-        _onExit = onExit;
-        _options = options;
-    };
+        _options = options,
+        _cmExecutable = _options && _options.cmPath || "_cm.exe",
+        _onRead = _options && _options.onRead || null,
+        _onError = _options && _options.onError || null,
+        _onExit = _options && _options.onExit || null,
+        CM_ROOT = _options && _options.cmRoot || "C:\\CetDev\\version6.5",
+        CM_HOME = CM_ROOT + "\\home",
+        CM_WRITE = CM_ROOT + "\\write";;
 
     this.start = function (options) {
         return new Promise(function (resolve, reject) {
-            if (options && options.cmPath) {
-                _cmExecutable = options.cmPath;
-            }
-            
             self.setEnvironmentVariables();
             self.kill();
 
             var args = ["/develop", "/nocoloring"];
-            
-            if(options && options.clean) {
+
+            if (options && options.clean) {
                 args.push("/clean");
             }
-                
+
             _cm = proc.spawn(_cmExecutable, args);
 
             _cm.stdout.on("data", function (data) {
                 data = data.toString();
-                
+
                 if (_onRead)
                     _onRead(data);
 
@@ -45,7 +39,7 @@ module.exports = new (function (proc, psFind) {
 
             _cm.stderr.on("data", function (data) {
                 data = data.toString();
-                
+
                 if (_onError)
                     _onError(data);
                 else
@@ -61,23 +55,26 @@ module.exports = new (function (proc, psFind) {
 
     this.write = function (data) {
         var cmd = _makeCommand(data);
-        
-        if(_options && _options.debug)
+
+        if (_options && _options.debug)
             console.log(data);
-        
+
         _cm.stdin.write(cmd);
     };
-    
-    // this.clean = function() {
-    //   proc.execSync("make --jobs -C \"" + + "\" \"clean-cm\"")  
-    // };
+
+    this.clean = function () {
+        self.kill();
+        
+        var r = proc.execSync("make --jobs -C \"" + CM_HOME + "\" \"clean-cm\"");
+        return r.toString();
+    };
 
     this.runFile = function (file) {
         file = file.replace(/\\/g, "");
         var cmd = "run(\"" + file + "\");";
         self.write(cmd);
     };
-    
+
     this.compileFile = function (file) {
         file = file.replace(/\\/g, "");
         var cmd = "load(\"" + file + "\");";
@@ -100,10 +97,6 @@ module.exports = new (function (proc, psFind) {
             env_vars_set = true;
         }
 
-        var CM_ROOT = _options && _options.cmRoot || "C:\\CetDev\\version6.5",
-            CM_HOME = CM_ROOT + "\\home",
-            CM_WRITE = CM_ROOT + "\\write";
-
         process.env["CM_ARCH"] = "win64";
         process.env["CM_ENVFILE_EMACS"] = CM_WRITE + "\\_emacs.cmenv";
         process.env["CM_ENVFILE_OPERATOR"] = CM_WRITE + "\\_operator.cmenv";
@@ -114,14 +107,14 @@ module.exports = new (function (proc, psFind) {
         process.env["CM_UNIX_WRITE"] = CM_WRITE;
         process.env["CM_VCVERSION"] = "10";
         process.env["CM_WRITE"] = CM_WRITE;
-        process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\win64;";
+        process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\win64;C:\\Program Files (x86)\\CetDev\\gnu\\cygwin\\bin";
     }
-    
+
     function _makeCommand(data) {
         return data + "\x01";
     }
-    
+
     function _isCompilerReady(data) {
         return data.match(/cm>$/g);
     }
-})(require("child_process"), require("ps-node"));
+}
