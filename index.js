@@ -80,6 +80,11 @@ module.exports = function (options) {
         var cmd = "load(\"" + file + "\");";
         self.write(cmd);
     };
+    
+    this.quitDebug = function() {
+        var cmd = "quit();";
+        self.write(cmd);  
+    };
 
     this.kill = function () {
         self.setEnvironmentVariables();
