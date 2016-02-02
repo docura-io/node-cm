@@ -60,16 +60,22 @@ module.exports = new (function (proc, psFind) {
 
     this.write = function (data) {
         var cmd = _makeCommand(data);
+        
+        if(_debug)
+            console.log(data);
+        
         _cm.stdin.write(cmd);
     };
 
     this.runFile = function (file) {
-        var cmd = _makeCommand("run(\"" + file + "\")");
+        file = file.replace(/\\/g, "");
+        var cmd = "run(\"" + file + "\")";
         self.write(cmd);
     };
     
     this.compileFile = function (file) {
-        var cmd = _makeCommand("load(\"" + file + "\")");
+        file = file.replace(/\\/g, "");
+        var cmd = "load(\"" + file + "\")";
         self.write(cmd);
     };
 
