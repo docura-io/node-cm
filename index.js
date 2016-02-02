@@ -24,7 +24,13 @@ module.exports = new (function (proc, psFind) {
             self.setEnvironmentVariables();
             self.kill();
 
-            _cm = proc.spawn(_cmExecutable, ["/develop", "/nocoloring"]);
+            var args = ["/develop", "/nocoloring"];
+            
+            if(options && options.clean) {
+                args.push("/clean");
+            }
+                
+            _cm = proc.spawn(_cmExecutable, args);
 
             _cm.stdout.on("data", function (data) {
                 data = data.toString();
