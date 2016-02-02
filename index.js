@@ -70,13 +70,13 @@ module.exports = function (options) {
     };
 
     this.runFile = function (file) {
-        file = file.replace(/\\/g, "");
+        file = file.replace(/\\/g, "/");
         var cmd = "run(\"" + file + "\");";
         self.write(cmd);
     };
 
     this.compileFile = function (file) {
-        file = file.replace(/\\/g, "");
+        file = file.replace(/\\/g, "/");
         var cmd = "load(\"" + file + "\");";
         self.write(cmd);
     };
