@@ -25,19 +25,23 @@ module.exports = new (function (proc, psFind) {
             _cm = proc.spawn(_cmExecutable, ["/develop", "/nocoloring"]);
 
             _cm.stdout.on("data", function (data) {
+                data = data.toString();
+                
                 if (_onRead)
-                    _onRead(data.toString());
+                    _onRead(data);
 
-                if (data.indexOf("startup done in") > -1) {
+                if (_isCompilerReady(data)) {
                     resolve(true);
                 }
             });
 
             _cm.stderr.on("data", function (data) {
+                data = data.toString();
+                
                 if (_onError)
-                    _onError(data.toString());
+                    _onError(data);
                 else
-                    throw new Error(data.toString());
+                    throw new Error(data);
             });
 
             _cm.on("exit", function (code) {
@@ -46,12 +50,15 @@ module.exports = new (function (proc, psFind) {
             });
         });
     };
-    
-    this.write = function(data) {
-        return new Promise(function(resolve, reject) {
-            _cm.stdin.write(data + "\x01");
-            resolve();
-        });
+
+    this.write = function (data) {
+        var cmd = _makeCommand(data);
+        _cm.stdin.write(cmd);
+    };
+
+    this.runFile = function (file) {
+        var cmd = _makeCommand("runFile(\"" + file + "\")");
+        self.write(cmd);
     };
 
     this.kill = function () {
@@ -85,5 +92,13 @@ module.exports = new (function (proc, psFind) {
         process.env["CM_VCVERSION"] = "10";
         process.env["CM_WRITE"] = CM_WRITE;
         process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\win64;";
+    }
+    
+    function _makeCommand(data) {
+        return data + "\x01";
+    }
+    
+    function _isCompilerReady(data) {
+        return data.match(/cm>$/g);
     }
 })(require("child_process"), require("ps-node"));
