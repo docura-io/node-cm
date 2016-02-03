@@ -120,6 +120,6 @@ module.exports = function (options) {
     }
 
     function _isCompilerReady(data) {
-        return data.match(/cm>$/g);
+        return data.match(/cm>\s*$/g);
     }
 }
