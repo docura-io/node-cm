@@ -138,11 +138,7 @@ module.exports = function (options) {
     }
     
     function _parseStackEntry(data) {
-        var entry = null;
-        
-        if(data.match(/error/g)) {
-            entry = _parseErrorEntry(data);
-        }
+        var entry = _parseErrorEntry(data);
         
         if(entry) {
             if(_entries.length >= _maxStatementsInTheStack)
@@ -163,7 +159,9 @@ module.exports = function (options) {
               column: match[3],
               description: match[4]
             };
-        }        
+        }     
+        
+        return null;   
     }
 
     function _makeCommand(data) {
