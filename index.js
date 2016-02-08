@@ -11,7 +11,10 @@ module.exports = function (options) {
         _onExit = _options && _options.onExit || null,
         CM_ROOT = _options && _options.cmRoot || "C:\\CetDev\\version6.5",
         CM_HOME = CM_ROOT + "\\home",
-        CM_WRITE = CM_ROOT + "\\write";;
+        CM_WRITE = CM_ROOT + "\\write",
+        _maxStatementsInTheStack = 100,
+        _stack = [],
+        _entries = [];
 
     this.start = function (options) {
         return new Promise(function (resolve, reject) {
@@ -28,6 +31,10 @@ module.exports = function (options) {
 
             _cm.stdout.on("data", function (data) {
                 data = data.toString();
+                
+                _addToStack(data);
+                
+                _parseStackEntry(data);
 
                 if (_onRead)
                     _onRead(data);
@@ -113,6 +120,50 @@ module.exports = function (options) {
         process.env["CM_VCVERSION"] = "10";
         process.env["CM_WRITE"] = CM_WRITE;
         process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\win64;C:\\Program Files (x86)\\CetDev\\gnu\\cygwin\\bin";
+    }
+    
+    this.getStack = function() {
+        return _stack;
+    };
+    
+    this.getEntries = function() {
+        return _entries;
+    };
+    
+    function _addToStack(data) {
+        if(_stack.length >= _maxStatementsInTheStack)
+            _stack.shift();
+            
+        _stack.push(data);
+    }
+    
+    function _parseStackEntry(data) {
+        var entry = null;
+        
+        if(data.match(/error/g)) {
+            entry = _parseErrorEntry(data);
+        }
+        
+        if(entry) {
+            if(_entries.length >= _maxStatementsInTheStack)
+                _entries.shift();
+            
+            _entries.push(entry);
+        }
+    }
+    
+    function _parseErrorEntry(data) {
+        var match = /([cC]:.*\.cm)\((\d+)\,\s{1}(\d+)\):\s*(.+)\s+\(/g.exec(data);
+
+        if(match) {
+            return {
+              type: "error",
+              filename: match[1],
+              line: match[2],
+              column: match[3],
+              description: match[4]
+            };
+        }        
     }
 
     function _makeCommand(data) {

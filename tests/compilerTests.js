@@ -3,13 +3,30 @@ var mocha = require("mocha"),
     cm = require("../index.js");
 
 describe("compiler", function () {
-        it("should start CM", function (done) {
+        // it("should start CM", function (done) {
+        //     this.timeout(40 * 1000);
+        //     var compiler = new cm();
+        //     var onStart = compiler.start();
+    
+        //     onStart.then(function (success) { 
+        //         success.should.be.true;
+        //         done();
+        //     }).catch(done);
+        // });
+        
+        it("should start CM and output stack", function (done) {
             this.timeout(40 * 1000);
-            var compiler = new cm();
+            var compiler = new cm({ onRead: function(data) {
+                // console.log(data);
+            }});
             var onStart = compiler.start();
     
             onStart.then(function (success) { 
                 success.should.be.true;
+                
+                console.dir(compiler.getEntries());
+                console.dir(compiler.getStack());
+                
                 done();
             }).catch(done);
         });
