@@ -14,9 +14,13 @@ module.exports = function (options) {
         CM_WRITE = CM_ROOT + "\\write",
         _maxStatementsInTheStack = 100,
         _stack = [],
-        _entries = [];
+        _entries = [],
+        _readBuffer = [],
+        intervalId = 0;
 
     this.start = function (options) {
+        intervalId = setInterval(flushToRead, 200);
+
         return new Promise(function (resolve, reject) {
             self.setEnvironmentVariables();
             self.kill();
@@ -31,13 +35,11 @@ module.exports = function (options) {
 
             _cm.stdout.on("data", function (data) {
                 data = data.toString();
-                
-                _addToStack(data);
-                
-                _parseStackEntry(data);
 
-                if (_onRead)
-                    _onRead(data);
+                if (_onRead) {
+                    _readBuffer.push(data);
+                    // _onRead(data);
+                }
 
                 if (_isCompilerReady(data)) {
                     resolve(true);
@@ -46,7 +48,6 @@ module.exports = function (options) {
 
             _cm.stderr.on("data", function (data) {
                 data = data.toString();
-
                 if (_onError)
                     _onError(data);
                 else
@@ -54,11 +55,27 @@ module.exports = function (options) {
             });
 
             _cm.on("exit", function (code) {
+                stopInterval();
                 if (_onExit)
                     _onExit(code);
             });
         });
     };
+
+    this.stopInterval = function () {
+        if (intervalId != 0) {
+            flushToRead();
+            clearInterval(intervalId);
+        }
+    }
+
+    this.flushToRead = function () {
+        if (_readBuffer.length > 0 && _onRead) {
+            var toSend = _readBuffer.join();
+            _readBuffer = [];
+            _onRead(toSend)
+        }
+    }
 
     this.write = function (data) {
         var cmd = _makeCommand(data);
@@ -71,7 +88,8 @@ module.exports = function (options) {
 
     this.clean = function () {
         self.kill();
-        
+        stopInterval();
+
         var r = proc.execSync("make --jobs -C \"" + CM_HOME + "\" \"clean-cm\"");
         return r.toString();
     };
@@ -87,14 +105,15 @@ module.exports = function (options) {
         var cmd = "load(\"" + file + "\");";
         self.write(cmd);
     };
-    
-    this.quitDebug = function() {
+
+    this.quitDebug = function () {
         var cmd = "quit();";
-        self.write(cmd);  
+        self.write(cmd);
     };
 
     this.kill = function () {
         self.setEnvironmentVariables();
+
 
         console.log("Killing pending processes");
         var code = proc.execSync("cm_pskill /name \"_cm.exe\" /beginsWith \"msdev\" /beginsWith \"link\" /titleBeginsWith \"Microsoft Visual\"");
@@ -120,48 +139,6 @@ module.exports = function (options) {
         process.env["CM_VCVERSION"] = "10";
         process.env["CM_WRITE"] = CM_WRITE;
         process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\win64;C:\\Program Files (x86)\\CetDev\\gnu\\cygwin\\bin";
-    }
-    
-    this.getStack = function() {
-        return _stack;
-    };
-    
-    this.getEntries = function() {
-        return _entries;
-    };
-    
-    function _addToStack(data) {
-        if(_stack.length >= _maxStatementsInTheStack)
-            _stack.shift();
-            
-        _stack.push(data);
-    }
-    
-    function _parseStackEntry(data) {
-        var entry = _parseErrorEntry(data);
-        
-        if(entry) {
-            if(_entries.length >= _maxStatementsInTheStack)
-                _entries.shift();
-            
-            _entries.push(entry);
-        }
-    }
-    
-    function _parseErrorEntry(data) {
-        var match = /([cC]:.*\.cm)\((\d+)\,\s{1}(\d+)\):\s*(.+)\s+\(/g.exec(data);
-
-        if(match) {
-            return {
-              type: "error",
-              filename: match[1],
-              line: match[2],
-              column: match[3],
-              description: match[4]
-            };
-        }     
-        
-        return null;   
     }
 
     function _makeCommand(data) {
