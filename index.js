@@ -19,7 +19,7 @@ module.exports = function (options) {
         intervalId = 0;
 
     this.start = function (options) {
-        intervalId = setInterval(flushToRead, 200);
+        intervalId = setInterval(self.flushToRead, 200);
 
         return new Promise(function (resolve, reject) {
             self.setEnvironmentVariables();
@@ -55,7 +55,7 @@ module.exports = function (options) {
             });
 
             _cm.on("exit", function (code) {
-                stopInterval();
+                self.stopInterval();
                 if (_onExit)
                     _onExit(code);
             });
@@ -64,14 +64,14 @@ module.exports = function (options) {
 
     this.stopInterval = function () {
         if (intervalId != 0) {
-            flushToRead();
+            self.flushToRead();
             clearInterval(intervalId);
         }
     }
 
     this.flushToRead = function () {
         if (_readBuffer.length > 0 && _onRead) {
-            var toSend = _readBuffer.join();
+            var toSend = _readBuffer.join("");
             _readBuffer = [];
             _onRead(toSend)
         }
@@ -88,7 +88,7 @@ module.exports = function (options) {
 
     this.clean = function () {
         self.kill();
-        stopInterval();
+        self.stopInterval();
 
         var r = proc.execSync("make --jobs -C \"" + CM_HOME + "\" \"clean-cm\"");
         return r.toString();
