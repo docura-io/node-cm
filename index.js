@@ -25,7 +25,7 @@ module.exports = function (options) {
             self.setEnvironmentVariables();
             self.kill();
 
-            var args = ["/develop", "/nocoloring"];
+            var args = ["/develop", "/nocoloring", "/multiple_instances"];
 
             if (options && options.clean) {
                 args.push("/clean");
