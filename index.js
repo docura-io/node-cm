@@ -9,6 +9,7 @@ module.exports = function (options) {
         _onRead = _options && _options.onRead || null,
         _onError = _options && _options.onError || null,
         _onExit = _options && _options.onExit || null,
+        CM_ARCH = _options && _options.cmArch || "win64",
         CM_ROOT = _options && _options.cmRoot || "C:\\CetDev\\version6.5",
         CM_HOME = CM_ROOT + "\\home",
         CM_WRITE = CM_ROOT + "\\write",
@@ -128,17 +129,17 @@ module.exports = function (options) {
             env_vars_set = true;
         }
 
-        process.env["CM_ARCH"] = "win64";
+        process.env["CM_ARCH"] = CM_ARCH;
         process.env["CM_ENVFILE_EMACS"] = CM_WRITE + "\\_emacs.cmenv";
         process.env["CM_ENVFILE_OPERATOR"] = CM_WRITE + "\\_operator.cmenv";
         process.env["CM_HOME"] = CM_HOME;
-        process.env["CM_LIBS"] = CM_WRITE + "\\data\\cm-libs\\win64";
+        process.env["CM_LIBS"] = CM_WRITE + "\\data\\cm-libs\\" + CM_ARCH;
         process.env["CM_ROOT"] = CM_ROOT;
         process.env["CM_UNIX_HOME"] = CM_HOME;
         process.env["CM_UNIX_WRITE"] = CM_WRITE;
         process.env["CM_VCVERSION"] = "10";
         process.env["CM_WRITE"] = CM_WRITE;
-        process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\win64;C:\\Program Files (x86)\\CetDev\\gnu\\cygwin\\bin";
+        process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\" + CM_ARCH + ";C:\\Program Files (x86)\\CetDev\\gnu\\cygwin\\bin";
     }
 
     function _makeCommand(data) {
