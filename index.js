@@ -3,43 +3,33 @@ var proc = require("child_process");
 module.exports = function (options) {
     var self = this,
         _cm = null,
-        env_vars_set = false,
         _options = options,
-        _cmExecutable = _options && _options.cmPath || "_cm.exe",
         _onRead = _options && _options.onRead || null,
         _onError = _options && _options.onError || null,
         _onExit = _options && _options.onExit || null,
-        CM_ARCH = _options && _options.cmArch || "win64",
         CM_ROOT = _options && _options.cmRoot || "C:\\CetDev\\version6.5",
-        CM_HOME = CM_ROOT + "\\home",
-        CM_WRITE = CM_ROOT + "\\write",
-        _maxStatementsInTheStack = 100,
-        _stack = [],
-        _entries = [],
-        _readBuffer = [],
-        intervalId = 0;
+        CM_HOME = _options && _options.gitMode ? CM_ROOT + "\\base" : CM_ROOT + "\\home";
+        // CM_WRITE = CM_ROOT + "\\write",
 
     this.start = function (options) {
-        intervalId = setInterval(self.flushToRead, 200);
-
         return new Promise(function (resolve, reject) {
-            self.setEnvironmentVariables();
-            self.kill();
-
-            var args = ["/develop", "/nocoloring", "/multiple_instances"];
-
+            var args = ["/nocoloring"];
             if (options && options.clean) {
                 args.push("/clean");
             }
-
-            _cm = proc.spawn(_cmExecutable, args);
-
+            // _cm = proc.spawn("c:\\CetDev\\version10.0\\setenv.cmd && " + _cmExecutable , args, {shell:true});
+            if ( CM_ROOT.indexOf('9.5') > -1 ) {
+                args = [CM_ROOT];
+                _cm = proc.spawn(__dirname + "\\cmstartdev.cmd", args);
+            } else {
+                _cm = proc.spawn(CM_HOME+"\\bin\\cmstartdev.cmd", args);
+            }            
+			
             _cm.stdout.on("data", function (data) {
                 data = data.toString();
 
                 if (_onRead) {
-                    _readBuffer.push(data);
-                    // _onRead(data);
+                    _onRead(data);
                 }
 
                 if (_isCompilerReady(data)) {
@@ -49,34 +39,27 @@ module.exports = function (options) {
 
             _cm.stderr.on("data", function (data) {
                 data = data.toString();
-                if (_onError)
-                    _onError(data);
-                else
-                    throw new Error(data);
+                // they have an echo that gets mad
+                if ( !_onError ) throw new Error(data);
+                // if (_onError)
+
+                //     _onError(data);
+                // else
+                //     throw new Error(data);
+            });
+			
+			_cm.on("error", function (error) {
+                console.log("HELP");
+				console.log(error);
             });
 
             _cm.on("exit", function (code) {
-                self.stopInterval();
+				console.log(code);
                 if (_onExit)
                     _onExit(code);
             });
         });
     };
-
-    this.stopInterval = function () {
-        if (intervalId != 0) {
-            self.flushToRead();
-            clearInterval(intervalId);
-        }
-    }
-
-    this.flushToRead = function () {
-        if (_readBuffer.length > 0 && _onRead) {
-            var toSend = _readBuffer.join("");
-            _readBuffer = [];
-            _onRead(toSend)
-        }
-    }
 
     this.write = function (data) {
         var cmd = _makeCommand(data);
@@ -89,9 +72,8 @@ module.exports = function (options) {
 
     this.clean = function () {
         self.kill();
-        self.stopInterval();
-
-        var r = proc.execSync("make --jobs -C \"" + CM_HOME + "\" \"clean-cm\"");
+        // var r = proc.execSync("make --jobs -C \"" + CM_HOME + "\" \"clean-cm\"");
+        var r = proc.execSync(CM_HOME+"\\bin\\cmstarttestclean.cmd");
         return r.toString();
     };
 
@@ -113,34 +95,10 @@ module.exports = function (options) {
     };
 
     this.kill = function () {
-        self.setEnvironmentVariables();
-
-
         console.log("Killing pending processes");
-        var code = proc.execSync("cm_pskill /name \"_cm.exe\" /beginsWith \"msdev\" /beginsWith \"link\" /titleBeginsWith \"Microsoft Visual\"");
+        var code = proc.execSync(CM_HOME + "\\bin\\cm_pskill /name \"_cm.exe\" /beginsWith \"msdev\" /beginsWith \"link\" /titleBeginsWith \"Microsoft Visual\"");
         console.log("All processes killed");
-        return code;
     };
-
-    this.setEnvironmentVariables = function () {
-        if (env_vars_set) {
-            return;
-        } else {
-            env_vars_set = true;
-        }
-
-        process.env["CM_ARCH"] = CM_ARCH;
-        process.env["CM_ENVFILE_EMACS"] = CM_WRITE + "\\_emacs.cmenv";
-        process.env["CM_ENVFILE_OPERATOR"] = CM_WRITE + "\\_operator.cmenv";
-        process.env["CM_HOME"] = CM_HOME;
-        process.env["CM_LIBS"] = CM_WRITE + "\\data\\cm-libs\\" + CM_ARCH;
-        process.env["CM_ROOT"] = CM_ROOT;
-        process.env["CM_UNIX_HOME"] = CM_HOME;
-        process.env["CM_UNIX_WRITE"] = CM_WRITE;
-        process.env["CM_VCVERSION"] = "10";
-        process.env["CM_WRITE"] = CM_WRITE;
-        process.env["PATH"] = process.env["PATH"] + ";" + CM_HOME + "\\bin\\;" + CM_HOME + "\\bin\\" + CM_ARCH + ";C:\\Program Files (x86)\\CetDev\\gnu\\cygwin\\bin";
-    }
 
     function _makeCommand(data) {
         return data + "\x01";
